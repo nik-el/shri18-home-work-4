@@ -2,6 +2,10 @@ const express = require('express');
 const app = express();
 const fs = require('fs');
 
+const AVAILABLE_TYPES = ['info', 'critical'];
+
+const port = 3000;
+
 const formatValue = (value) => {
   return (value < 10 ? '0' : '') + value;
 };
@@ -15,8 +19,32 @@ const formatTime = (seconds) => {
 };
 
 app.get('/api/events', (req, res) => {
-  const obj = JSON.parse(fs.readFileSync('events.json', 'utf8'));
-  res.send(obj)
+  const filteredEvents = [];
+
+  if (req.query.type) {
+    const queryTypes = req.query.type.split(':');
+
+    for (const type of queryTypes) {
+      if (AVAILABLE_TYPES.indexOf(type) === -1) {
+        res.status(400).send(`Incorrect type: ${req.query.type}`);
+        break;
+      } else {
+        const obj = JSON.parse(fs.readFileSync('events.json', 'utf8'));
+        obj.events.forEach(event => {
+          if (queryTypes.indexOf(event.type) !== -1) {
+            filteredEvents.push(event)
+          }
+        });
+      }
+    }
+
+    if (filteredEvents.length) {
+      res.send(filteredEvents)
+    }
+  } else {
+    const obj = JSON.parse(fs.readFileSync('events.json', 'utf8'));
+    res.send(obj)
+  }
 });
 
 app.get('/api/status', (req, res) => {
@@ -24,9 +52,14 @@ app.get('/api/status', (req, res) => {
   res.send(formatTime(uptime))
 });
 
-app.use(function(req, res, next) {
-  res.status(404).send('Sorry cant find that!');
+app.use( (req, res, next) => {
+  res.status(404).send('<h1>Page not found</h1>');
 });
 
-console.log('Listen on 3000 port');
-app.listen(3000);
+app.listen(port, (err) => {
+  if (err) {
+    return console.log('Error: ', err);
+  }
+
+  console.log(`Server on listening on ${port} port`);
+});
