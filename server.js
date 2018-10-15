@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const AVAILABLE_TYPES = ['info', 'critical'];
 
-const port = 3000;
+const port = 3100;
 
 const formatValue = (value) => {
   return (value < 10 ? '0' : '') + value;
@@ -18,7 +18,13 @@ const formatTime = (seconds) => {
   return formatValue(hours) + ':' + formatValue(min) + ':' + formatValue(sec);
 };
 
-app.get('/api/events', (req, res) => {
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
+app.post('/api/events', (req, res) => {
   const filteredEvents = [];
 
   if (req.query.type) {
@@ -39,7 +45,10 @@ app.get('/api/events', (req, res) => {
     }
 
     if (filteredEvents.length) {
-      res.send(filteredEvents)
+      const response = {
+        events: filteredEvents
+      };
+      res.send(response)
     }
   } else {
     const obj = JSON.parse(fs.readFileSync('events.json', 'utf8'));
@@ -47,7 +56,7 @@ app.get('/api/events', (req, res) => {
   }
 });
 
-app.get('/api/status', (req, res) => {
+app.post('/api/status', (req, res) => {
   const uptime = process.uptime();
   res.send(formatTime(uptime))
 });
