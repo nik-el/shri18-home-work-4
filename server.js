@@ -25,35 +25,38 @@ app.use((req, res, next) => {
 });
 
 app.post('/api/events', (req, res) => {
-  const filteredEvents = [];
+  let {events} = JSON.parse(fs.readFileSync('events.json', 'utf8'));
+  let filteredEvents = [];
+  const types = req.query.type;
+  const limit = req.query.limit;
+  const offset = req.query.offset;
 
-  if (req.query.type) {
-    const queryTypes = req.query.type.split(':');
+  if (types) {
+    const queryTypes = types.split(':');
 
     for (const type of queryTypes) {
       if (AVAILABLE_TYPES.indexOf(type) === -1) {
-        res.status(400).send(`Incorrect type: ${req.query.type}`);
+        res.status(400).send(`Incorrect type: ${types}`);
         break;
       } else {
-        const obj = JSON.parse(fs.readFileSync('events.json', 'utf8'));
-        obj.events.forEach(event => {
-          if (queryTypes.indexOf(event.type) !== -1) {
-            filteredEvents.push(event)
-          }
+        filteredEvents = events.filter(event => {
+          return queryTypes.indexOf(event.type) !== -1;
         });
       }
     }
-
-    if (filteredEvents.length) {
-      const response = {
-        events: filteredEvents
-      };
-      res.send(response)
-    }
   } else {
-    const obj = JSON.parse(fs.readFileSync('events.json', 'utf8'));
-    res.send(obj)
+    filteredEvents = events;
   }
+
+  if (limit && !offset) {
+    filteredEvents = filteredEvents.slice(0, limit)
+  } else if (limit && offset) {
+    const start = limit * offset;
+    const end = limit * (+offset + 1);
+    filteredEvents = filteredEvents.slice(start, end);
+  }
+
+  res.send({'events': filteredEvents});
 });
 
 app.post('/api/status', (req, res) => {
