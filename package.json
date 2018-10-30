@@ -18,5 +18,9 @@
   "homepage": "https://github.com/nik-el/shri18-home-work-4#readme",
   "dependencies": {
     "express": "^4.16.4"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.0",
+    "@types/request": "^2.48.0",
   }
 }
