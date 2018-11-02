@@ -2,8 +2,9 @@
   "name": "shri18-home-work-4",
   "version": "1.0.0",
   "description": "Node.js task",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
