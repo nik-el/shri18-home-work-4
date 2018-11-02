@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const AVAILABLE_TYPES = ['info', 'critical'];
 
-const port = 3100;
+const port = 8000;
 
 const formatValue = (value) => {
   return (value < 10 ? '0' : '') + value;
@@ -25,38 +25,44 @@ app.use((req, res, next) => {
 });
 
 app.post('/api/events', (req, res) => {
-  let {events} = JSON.parse(fs.readFileSync('events.json', 'utf8'));
-  let filteredEvents = [];
-  const types = req.query.type;
-  const limit = req.query.limit;
-  const offset = req.query.offset;
-
-  if (types) {
-    const queryTypes = types.split(':');
-
-    for (const type of queryTypes) {
-      if (AVAILABLE_TYPES.indexOf(type) === -1) {
-        res.status(400).send(`Incorrect type: ${types}`);
-        break;
-      } else {
-        filteredEvents = events.filter(event => {
-          return queryTypes.indexOf(event.type) !== -1;
-        });
-      }
+  fs.readFile('events.json', 'utf8', (err, data) => {
+    if (err) {
+      return console.warn('error: ', err);
     }
-  } else {
-    filteredEvents = events;
-  }
 
-  if (limit && !offset) {
-    filteredEvents = filteredEvents.slice(0, limit)
-  } else if (limit && offset) {
-    const start = limit * offset;
-    const end = limit * (+offset + 1);
-    filteredEvents = filteredEvents.slice(start, end);
-  }
+    const events = JSON.parse(data).events;
 
-  res.send({'events': filteredEvents});
+    let filteredEvents = [];
+    const types = req.query.type;
+    const limit = req.query.limit;
+    const offset = req.query.offset;
+
+    if (types) {
+      const queryTypes = types.split(':');
+
+      for (const type of queryTypes) {
+        if (AVAILABLE_TYPES.indexOf(type) === -1) {
+          res.status(400).send(`Incorrect type: ${types}`);
+          break;
+        } else {
+          filteredEvents = events.filter(event => {
+            return queryTypes.indexOf(event.type) !== -1;
+          });
+        }
+      }
+    } else {
+      filteredEvents = events;
+    }
+
+    if (limit && !offset) {
+      filteredEvents = filteredEvents.slice(0, limit)
+    } else if (limit && offset) {
+      const start = limit * offset;
+      const end = limit * (+offset + 1);
+      filteredEvents = filteredEvents.slice(start, end);
+    }
+    res.send({'events': filteredEvents});
+  });
 });
 
 app.post('/api/status', (req, res) => {
