@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const AVAILABLE_TYPES = ['info', 'critical'];
 
-const port = 8000;
+const port = process.env.PORT || 8000;
 
 const formatValue = (value) => {
   return (value < 10 ? '0' : '') + value;
@@ -30,7 +30,12 @@ app.post('/api/events', (req, res) => {
       return console.warn('error: ', err);
     }
 
-    const events = JSON.parse(data).events;
+    let events = [];
+    try {
+      events = JSON.parse(data).events;
+    } catch(e) {
+      console.warn('Ошибка чтения данных:', e);
+    }
 
     let filteredEvents = [];
     const types = req.query.type;
@@ -41,12 +46,12 @@ app.post('/api/events', (req, res) => {
       const queryTypes = types.split(':');
 
       for (const type of queryTypes) {
-        if (AVAILABLE_TYPES.indexOf(type) === -1) {
+        if (!AVAILABLE_TYPES.includes(type)) {
           res.status(400).send(`Incorrect type: ${types}`);
           break;
         } else {
           filteredEvents = events.filter(event => {
-            return queryTypes.indexOf(event.type) !== -1;
+            return queryTypes.includes(event.type);
           });
         }
       }
@@ -65,12 +70,12 @@ app.post('/api/events', (req, res) => {
   });
 });
 
-app.post('/api/status', (req, res) => {
+app.post('/status', (req, res) => {
   const uptime = process.uptime();
   res.send(formatTime(uptime))
 });
 
-app.use( (req, res, next) => {
+app.use( (req, res) => {
   res.status(404).send('<h1>Page not found</h1>');
 });
 
