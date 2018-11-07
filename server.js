@@ -70,6 +70,40 @@ app.post('/api/events', (req, res) => {
   });
 });
 
+app.post('/api/link/read', (req, res) => {
+  fs.readFile('link.json', 'utf8', (err, data) => {
+    if (err) {
+      return console.warn('error: ', err);
+    }
+
+    let lastLink = '';
+    try {
+      lastLink = JSON.parse(data).link;
+    } catch(e) {
+      console.warn('Ошибка чтения данных:', e);
+    }
+
+    res.send({'lastLink': lastLink});
+  })
+});
+
+app.post('/api/link/save', (req, res) => {
+  let lastLink;
+
+  try {
+    lastLink = JSON.stringify({'link': req.query.link});
+  } catch(e) {
+    console.warn('Ошибка записи данных:', e);
+  }
+
+  fs.writeFile('link.json', lastLink , 'utf8', (err, data) => {
+    if (err) {
+      return console.warn('error: ', err);
+    }
+
+    res.status(200).send('link saved');  })
+});
+
 app.post('/status', (req, res) => {
   const uptime = process.uptime();
   res.send(formatTime(uptime))
